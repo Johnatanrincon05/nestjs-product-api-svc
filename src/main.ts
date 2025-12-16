@@ -24,6 +24,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('U2 Product API')
     .setDescription('CRUD de productos - U2 Actividad Sumativa')
+    .addTag('products', 'Operaciones sobre productos')
     .setVersion('1.0')
     .build();
 
