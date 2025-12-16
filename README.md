@@ -25,74 +25,124 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Project setup
+# U2 Product API
 
-```bash
-$ npm install
+Proyecto entregable para la materia *Arquitectura de Aplicaciones Web* (Maestría en Arquitectura de Software).
+
+## Resumen
+
+API REST construida con NestJS y TypeORM para gestionar productos (CRUD). Esta entrega incluye:
+
+- Estructura de carpetas siguiendo buenas prácticas de NestJS.
+- Documentación automática con Swagger disponible en `/api/docs`.
+- Interceptor global que unifica las respuestas exitosas en la forma `{ message, data }`.
+- Filtro global de excepciones que unifica respuestas de error en la forma `{ message, error }`.
+
+## Estructura relevante
+
+- `src/main.ts` — arranque de la aplicación y configuración de Swagger, pipes y providers globales.
+- `src/app.module.ts` — módulo raíz (registro de providers y módulos de la app).
+- `src/product/` — módulo de productos:
+  - `product.controller.ts` — rutas REST con decoradores Swagger y ejemplos de respuesta.
+  - `product.service.ts` — lógica de negocio (TypeORM repository).
+  - `dto/` — DTOs (`CreateProductDto`, `UpdateProductDto`) con validaciones y `@ApiProperty`.
+  - `entities/product.entity.ts` — entidad TypeORM `Product`.
+- `src/common/interceptors/response.interceptor.ts` — estandariza respuestas exitosas.
+- `src/common/filters/all-exceptions.filter.ts` — estandariza errores.
+
+## Contrato de API (resumen)
+
+Todas las respuestas exitosas están envueltas como:
+
+```
+{
+  "message": "success",
+  "data": ...
+}
 ```
 
-## Compile and run the project
+Los errores se devuelven como:
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```
+{
+  "message": "Descripción del error",
+  "error": { ... }
+}
 ```
 
-## Run tests
+Endpoints principales (prefijo global `/api`):
 
-```bash
-# unit tests
-$ npm run test
+- `POST /api/products` — crea un producto.
+  - Body: `CreateProductDto`.
+  - Respuesta: `{ message: 'success', data: { id, nombre, descripcion, precio } }`.
+- `GET /api/products` — lista productos.
+  - Respuesta: `{ message: 'success', data: [ ... ] }`.
+- `GET /api/products/:id` — obtiene producto por id.
+- `PUT /api/products/:id` — actualiza producto (`UpdateProductDto`).
+- `DELETE /api/products/:id` — elimina producto.
 
-# e2e tests
-$ npm run test:e2e
+Para ejemplos detallados de request/response revisa la documentación Swagger en runtime.
 
-# test coverage
-$ npm run test:cov
+## Documentación Swagger
+
+Swagger está configurado en `src/main.ts` con:
+
+- Título, descripción, versión.
+- Contacto y licencia.
+- Autenticación Bearer (esquema JWT declarado en Swagger UI).
+- Decoradores en DTOs y controladores para generar ejemplos de request y response.
+
+Accede a la UI en:
+
+```
+http://localhost:3000/api/docs
 ```
 
-## Deployment
+## Requisitos y dependencias
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- Node.js 18+ recomendado.
+- Dependencias principales incluidas en `package.json`: `@nestjs/*`, `typeorm`, `@nestjs/swagger`, `class-validator`, `class-transformer`, drivers `mysql2`/`pg`.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Configuración y ejecución
+
+1. Instala dependencias:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+2. Configura la conexión de base de datos en `src/app.module.ts` o mediante `@nestjs/config` según el entorno (production/dev). El proyecto está preparado para usar TypeORM; ajusta `type`, `host`, `port`, `username`, `password`, `database`.
 
-## Resources
+3. Ejecuta en modo desarrollo:
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npm run start:dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+4. Abre Swagger UI en `http://localhost:3000/api/docs` y prueba los endpoints.
 
-## Support
+## Validaciones y formato de respuestas
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- Los DTOs usan `class-validator` y `ValidationPipe` está registrado globalmente en `main.ts` con:
+  - `whitelist: true`, `transform: true`, `forbidNonWhitelisted: true`.
+- El `ResponseInterceptor` transforma resultados en `{ message, data }` para consistencia.
+- El `AllExceptionsFilter` captura excepciones y responde `{ message, error }`.
 
-## Stay in touch
+## Buenas prácticas y recomendaciones
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- Documenta cualquier cambio en los DTOs usando `@ApiProperty` para mantener Swagger actualizado.
+- Para endpoints protegidos, implementa guardas con `@UseGuards(AuthGuard)` y añade los `@ApiBearerAuth('JWT')` en controladores.
+- Añade tests e2e en `test/` usando Supertest y Jest (ya hay configuración inicial).
 
-## License
+## Comandos útiles
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- `npm run start:dev` — arranque en modo desarrollo con hot-reload.
+- `npm run build` — compila TypeScript.
+- `npm run start` — arranca la app empaquetada.
+- `npm run test` — corre pruebas unitarias.
+
+***
+
+Entrega: Maestría en Arquitectura de Software — Actividad Sumativa U2
+
+***
